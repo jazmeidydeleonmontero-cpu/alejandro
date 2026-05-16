@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiAmor: Miguel & Jazmeidy</title>
+    
+    <!-- Configuración personalizada de colores para Tailwind (Definido antes del script principal) -->
+    <script>
+        window.tailwind = {
+            config: {
+                theme: {
+                    extend: {
+                        colors: {
+                            'wiki-blue': '#a2d2ff',
+                            'wiki-pink': '#ffafcc',
+                            'wiki-purple': '#cdb4db',
+                            'wiki-dark': '#2b2d42',
+                            'wiki-bg': '#f8f9fa'
+                        },
+                        fontFamily: {
+                            'sans': ['Inter', 'sans-serif'],
+                            'serif': ['Georgia', 'serif']
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    
+    <!-- Incluyendo Tailwind CSS para el diseño y estilo rápido y adaptable -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluyendo FontAwesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            background-color: #f8f9fa;
+            color: #2b2d42;
+            overflow-x: hidden;
+        }
+
+        /* Estilo sutil de Wikipedia para el contenido principal */
+        .wiki-content p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+        
+        .wiki-content h2 {
+            border-bottom: 1px solid #cdb4db;
+            padding-bottom: 0.3rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-family: 'Georgia', serif;
+        }
+
+        /* Animación para el buscador */
+        .search-focus {
+            box-shadow: 0 0 15px rgba(205, 180, 219, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* Ocultar secciones dinámicamente */
+        .hidden-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos para los botones de estado de ánimo */
+        .mood-btn {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .mood-btn:hover, .mood-btn:active {
+            transform: scale(1.05);
+        }
+
+        /* Canvas para el juego */
+        #gameCanvas {
+            background-color: #cdb4db; /* Fondo morado claro */
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            display: block;
+            margin: 0 auto;
+            touch-action: none; /* Prevenir scroll al tocar el canvas */
+        }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <!-- Header / Buscador estilo Google-Wiki -->
+    <header class="bg-white border-b-2 border-wiki-purple p-4 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 cursor-pointer" onclick="showSection('inicio')">
+                <i class="fa-solid fa-heart text-wiki-pink text-3xl"></i>
+                <h1 class="text-2xl font-serif font-bold text-wiki-dark">Wiki<span class="text-wiki-blue">Amor</span></h1>
+            </div>
+
+            <!-- Buscador -->
+            <div class="w-full md:w-1/2 relative">
+                <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 border border-gray-300 search-focus focus-within:border-wiki-purple focus-within:bg-white">
+                    <i class="fa-solid fa-magnifying-glass text-gray-500 mr-2"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar recuerdos, razones, amor..." 
+                           class="bg-transparent w-full outline-none text-wiki-dark"
+                           onkeyup="handleSearch(event)">
+                    <button onclick="executeSearch()" class="ml-2 text-wiki-blue hover:text-wiki-purple transition">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contador de meses -->
+            <div class="text-sm font-semibold bg-wiki-pink text-white px-3 py-1 rounded-full shadow-md animate-pulse">
+                ¡Felices 07 Meses! 🎉
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row mt-6 px-4 gap-6">
+        
+        <!-- Sidebar (Navegación estilo Wiki) -->
+        <aside class="w-full md:w-1/4 bg-white p-4 rounded-xl shadow-md border border-gray-100 h-fit">
+            <h3 class="font-bold text-lg mb-4 text-wiki-dark border-b pb-2">Contenido</h3>
+            <ul class="space-y-2 text-wiki-dark">
+                <li><button onclick="showSection('inicio')" class="w-full text-left hover:text-wiki-pink transition hover:bg-gray-50 p-2 rounded"><i class="fa-solid fa-house-chimney mr-2 w-5"></i> Artículo Principal</button></li>
+                <li><button onclick="showSection('etapas')" class="w-full text-left hover:text-wiki-blue transition hover:bg-gray-50 p-2 rounded"><i class="fa-solid fa-timeline mr-2 w-5"></i> Etapas de la Vida del Amor</button></li>
+                <li><button onclick="showSection('mensajes')" class="w-full text-left hover:text-wiki-purple transition hover:bg-gray-50 p-2 rounded"><i class="fa-solid fa-envelope-open-text mr-2 w-5"></i> Botiquín de Emociones</button></li>
+                <li><button onclick="showSection('actividades')" class="w-full text-left hover:text-wiki-pink transition hover:bg-gray-50 p-2 rounded"><i class="fa-solid fa-list-check mr-2 w-5"></i> Actividades para Nosotros</button></li>
+                <li><button onclick="showSection('juego')" class="w-full text-left hover:text-wiki-blue transition hover:bg-gray-50 p-2 rounded"><i class="fa-solid fa-gamepad mr-2 w-5"></i> Nuestro Minijuego</button></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="w-full md:w-3/4 bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-100 min-h-[60vh] wiki-content relative">
+            
+            <!-- Sección: Inicio -->
+            <div id="inicio" class="content-section">
+                <h1 class="text-4xl font-serif font-bold text-wiki-dark mb-2">Miguel Alejandro Aybar</h1>
+                <p class="text-gray-500 italic text-sm mb-6">De WikiAmor, la enciclopedia libre de nuestro romance.</p>
+                
+                <div class="float-right w-full sm:w-1/2 md:w-1/3 bg-gray-50 border border-gray-200 p-4 ml-0 sm:ml-6 mb-4 rounded-lg shadow-sm">
+                    <h3 class="text-center font-bold bg-wiki-purple text-white py-1 rounded mb-2">Ficha Técnica</h3>
+                    <ul class="text-sm space-y-2">
+                        <li><strong>Pareja de:</strong> Jazmeidy <i class="fa-solid fa-heart text-wiki-pink text-xs"></i></li>
+                        <li><strong>Duración actual:</strong> 07 hermosos meses</li>
+                        <li><strong>Estado:</strong> Completamente enamorados</li>
+                        <li><strong>Mejores cualidades:</strong> Es perfecto, me hace reír, me cuida y tiene la sonrisa más linda.</li>
+                    </ul>
+                </div>
+
+                <p><strong>Miguel Alejandro Aybar</strong> es la persona más especial en la vida de Jazmeidy. Hoy se celebra el séptimo mes de lo que se considera una de las historias de amor más hermosas jamás escritas en esta enciclopedia. Este artículo está dedicado a documentar lo maravilloso que es y lo mucho que significa para ella.</p>
+                
+                <h2 class="text-2xl font-bold text-wiki-blue">Introducción a nuestro Mundo</h2>
+                <p>Desde que llegaste a mi vida, todo ha cambiado para mejor. Eres mi refugio, mi lugar seguro y mi aventura favorita. En estos 7 meses hemos construido algo tan nuestro, tan lleno de colores (como el rosa, morado y azul que tanto nos gustan), risas y momentos que atesoro cada día. Eres el chico más bueno y bonito del universo, y no hay día que no agradezca tenerte a mi lado.</p>
+                
+                <p>Este espacio es tuyo, Miguel. Es un pedacito de internet creado solo para nosotros. Para que sepas que en cada línea de código, en cada palabra escrita aquí, hay un "te amo" inmenso esperando por ti.</p>
+
+                <div class="bg-wiki-pink bg-opacity-20 p-4 rounded-lg mt-6 border-l-4 border-wiki-pink">
+                    <p class="font-semibold italic text-wiki-dark">"Eres la casualidad más bonita que llegó a mi vida. Felices 7 meses, mi amor hermoso."</p>
+                </div>
+            </div>
+
+            <!-- Sección: Etapas de la Vida del Amor -->
+            <div id="etapas" class="content-section hidden-section">
+                <h1 class="text-3xl font-serif font-bold text-wiki-dark mb-4">Etapas de la Vida del Amor</h1>
+                <p class="mb-6">Nuestro amor no es estático, ha crecido, ha evolucionado y se ha hecho más fuerte con cada mes que pasa. Estas son las etapas que hemos construido y las que nos faltan por vivir juntos.</p>
+                
+                <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-wiki-pink before:via-wiki-purple before:to-wiki-blue">
+                    
+                    <!-- Etapa 1 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-wiki-pink shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10 text-white">
+                            <i class="fa-regular fa-face-smile-wink"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-gray-200 shadow-sm bg-white">
+                            <h3 class="font-bold text-wiki-dark text-lg mb-1">El Comienzo (La Chispa)</h3>
+                            <p class="text-sm text-gray-600">Cuando nos conocimos, esas primeras miradas, las risas nerviosas y darme cuenta de que había encontrado a alguien excepcionalmente bueno y bonito. Esa chispa encendió todo esto que tenemos hoy.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Etapa 2 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-wiki-purple shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10 text-white">
+                            <i class="fa-solid fa-hand-holding-heart"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-gray-200 shadow-sm bg-white">
+                            <h3 class="font-bold text-wiki-dark text-lg mb-1">El Descubrimiento (Conocernos)</h3>
+                            <p class="text-sm text-gray-600">Esos meses de hablar hasta tarde, descubrir nuestros gustos, entender nuestras diferencias y aprender a amarnos tal y como somos. Cada detalle tuyo me enamoró más.</p>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-wiki-blue shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10 text-white">
+                            <i class="fa-solid fa-infinity"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-gray-200 shadow-sm bg-white">
+                            <h3 class="font-bold text-wiki-dark text-lg mb-1">El Presente (07 Meses de Felicidad)</h3>
+                            <p class="text-sm text-gray-600">El día de hoy. Siete meses de amor sincero. Me siento tan afortunada de tener a Miguel Alejandro como mi novio. Eres mi presente y la persona con la que quiero construir...</p>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 4 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-gray-300 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10 text-white">
+                            <i class="fa-solid fa-rocket"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-dashed border-gray-300 bg-gray-50 opacity-70">
+                            <h3 class="font-bold text-gray-500 text-lg mb-1">El Futuro (Nuestra Aventura)</h3>
+                            <p class="text-sm text-gray-500">Lo que nos espera. Todos los viajes, metas cumplidas, días buenos y malos que superaremos juntos. Mi futuro es contigo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Mensajes / Botiquín de Emociones -->
+            <div id="mensajes" class="content-section hidden-section">
+                <h1 class="text-3xl font-serif font-bold text-wiki-dark mb-4">Botiquín de Emociones</h1>
+                <p class="mb-6">Miguel, sé que no todos los días son perfectos. Hice esta sección para que tengas a dónde recurrir dependiendo de cómo te sientas. Haz clic en el botón que describa tu estado de ánimo actual para leer algo escrito especialmente para ti.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <button onclick="mostrarMensaje('enojado')" class="mood-btn bg-black text-white p-4 rounded-xl shadow-md flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-angry text-2xl text-red-400"></i>
+                        <span class="font-bold text-lg">Si estás Enojado</span>
+                    </button>
+                    
+                    <button onclick="mostrarMensaje('triste')" class="mood-btn bg-wiki-blue text-wiki-dark p-4 rounded-xl shadow-md flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-sad-tear text-2xl text-blue-700"></i>
+                        <span class="font-bold text-lg">Si estás Triste</span>
+                    </button>
+
+                    <button onclick="mostrarMensaje('feliz')" class="mood-btn bg-wiki-pink text-wiki-dark p-4 rounded-xl shadow-md flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-grin-stars text-2xl text-pink-700"></i>
+                        <span class="font-bold text-lg">Si estás Feliz</span>
+                    </button>
+
+                    <button onclick="mostrarMensaje('estresado')" class="mood-btn bg-wiki-purple text-wiki-dark p-4 rounded-xl shadow-md flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-face-flushed text-2xl text-purple-700"></i>
+                        <span class="font-bold text-lg">Si estás Estresado</span>
+                    </button>
+                </div>
+
+                <!-- Contenedor dinámico del mensaje -->
+                <div id="mensajeBox" class="hidden bg-white border-2 border-wiki-purple rounded-xl p-6 shadow-lg relative">
+                    <button onclick="cerrarMensaje()" class="absolute top-2 right-4 text-gray-400 hover:text-gray-700 text-xl font-bold">&times;</button>
+                    <h3 id="mensajeTitulo" class="text-xl font-bold mb-3 font-serif"></h3>
+                    <p id="mensajeTexto" class="text-gray-700 leading-relaxed text-justify whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <!-- Sección: Actividades -->
+            <div id="actividades" class="content-section hidden-section">
+                <h1 class="text-3xl font-serif font-bold text-wiki-dark mb-4">Lista de Actividades para Nosotros</h1>
+                <p class="mb-4">Para que nunca nos falten cosas por hacer juntos. Podemos ir marcando las que vayamos cumpliendo en los próximos meses.</p>
+                
+                <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <ul class="divide-y divide-gray-200">
+                        <li class="p-4 flex items-center hover:bg-gray-50 transition cursor-pointer" onclick="toggleCheckbox(this)">
+                            <div class="w-6 h-6 border-2 border-wiki-blue rounded mr-4 flex items-center justify-center text-transparent transition-colors">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <span class="text-lg text-gray-700">Tener una cita viendo las estrellas y hablando de todo.</span>
+                        </li>
+                        <li class="p-4 flex items-center hover:bg-gray-50 transition cursor-pointer" onclick="toggleCheckbox(this)">
+                            <div class="w-6 h-6 border-2 border-wiki-pink rounded mr-4 flex items-center justify-center text-transparent transition-colors">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <span class="text-lg text-gray-700">Cocinar algo nuevo juntos (¡aunque hagamos un desastre!).</span>
+                        </li>
+                        <li class="p-4 flex items-center hover:bg-gray-50 transition cursor-pointer" onclick="toggleCheckbox(this)">
+                            <div class="w-6 h-6 border-2 border-wiki-purple rounded mr-4 flex items-center justify-center text-transparent transition-colors">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <span class="text-lg text-gray-700">Maratón de películas con muchos snacks un domingo lluvioso.</span>
+                        </li>
+                        <li class="p-4 flex items-center hover:bg-gray-50 transition cursor-pointer" onclick="toggleCheckbox(this)">
+                            <div class="w-6 h-6 border-2 border-gray-400 rounded mr-4 flex items-center justify-center text-transparent transition-colors">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <span class="text-lg text-gray-700">Escribirnos cartas a mano y leerlas en nuestro aniversario de 1 año.</span>
+                        </li>
+                        <li class="p-4 flex items-center hover:bg-gray-50 transition cursor-pointer" onclick="toggleCheckbox(this)">
+                            <div class="w-6 h-6 border-2 border-black rounded mr-4 flex items-center justify-center text-transparent transition-colors">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <span class="text-lg text-gray-700">Ir a un lugar de la ciudad que ninguno de los dos conozca.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sección: Juego -->
+            <div id="juego" class="content-section hidden-section">
+                <h1 class="text-3xl font-serif font-bold text-wiki-dark mb-2">Atrapa los Corazones, Miguel!</h1>
+                <p class="mb-4 text-sm text-gray-600">Usa las flechas de tu teclado (o toca los lados del recuadro morado si estás en el celular) para mover la canasta de Jazmeidy y atrapar todo el amor.</p>
+                
+                <div class="relative">
+                    <canvas id="gameCanvas" width="400" height="300"></canvas>
+                    
+                    <!-- Controles superpuestos para móviles/touch -->
+                    <div class="absolute inset-0 flex justify-between w-full max-w-[400px] mx-auto pointer-events-none">
+                        <div id="btnLeft" class="w-1/2 h-full pointer-events-auto"></div>
+                        <div id="btnRight" class="w-1/2 h-full pointer-events-auto"></div>
+                    </div>
+
+                    <!-- Overlay de Game Over / Inicio -->
+                    <div id="gameOverlay" class="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center rounded-[10px] w-full max-w-[400px] mx-auto">
+                        <h2 id="gameMessage" class="text-white text-2xl font-bold mb-4 drop-shadow-md">¿Listo para jugar?</h2>
+                        <button onclick="startGame()" class="bg-wiki-pink text-white px-6 py-2 rounded-full font-bold hover:bg-pink-600 transition shadow-lg">
+                            <i class="fa-solid fa-play mr-2"></i> Jugar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-xl font-bold text-wiki-purple">Puntuación de Amor: <span id="scoreDisplay">0</span></p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Custom Message Box (Reemplazo de alert()) -->
+    <div id="customAlert" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300" id="alertBox">
+            <div class="flex justify-center mb-4">
+                <div class="bg-wiki-blue bg-opacity-20 p-3 rounded-full">
+                    <i class="fa-solid fa-circle-info text-3xl text-wiki-blue"></i>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-center mb-2 text-wiki-dark">Búsqueda Completada</h3>
+            <p id="alertMessage" class="text-center text-gray-600 mb-6"></p>
+            <button onclick="closeAlert()" class="w-full bg-wiki-blue hover:bg-blue-400 text-white font-bold py-2 px-4 rounded-lg transition">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 py-6 text-center text-gray-500 text-sm border-t border-gray-200">
+        <p>Hecho con todo el amor del mundo por Jazmeidy para Miguel.</p>
+        <p>Felices 07 Meses ❤️</p>
+    </footer>
+
+    <script>
+        // --- Lógica de Navegación ---
+        function showSection(sectionId) {
+            // Ocultar todas las secciones
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(sec => {
+                sec.classList.add('hidden-section');
+            });
+
+            // Mostrar la sección seleccionada
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.classList.remove('hidden-section');
+            }
+            
+            // Si el juego está activo pero cambiamos de sección, lo pausamos
+            if (sectionId !== 'juego' && gameLoopId) {
+                gameOver = true;
+                cancelAnimationFrame(gameLoopId);
+                document.getElementById('gameOverlay').style.display = 'flex';
+                document.getElementById('gameMessage').innerText = 'Juego Pausado';
+            }
+        }
+
+        // --- Lógica del Buscador ---
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                executeSearch();
+            }
+        }
+
+        function executeSearch() {
+            const input = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!input) return;
+
+            let respuesta = "";
+
+            // Lógica simple de búsqueda basada en palabras clave
+            if (input.includes('enojado') || input.includes('pelea') || input.includes('molesto')) {
+                showSection('mensajes');
+                mostrarMensaje('enojado');
+                respuesta = "Encontré algo para cuando estás enojado. Ve al Botiquín de Emociones.";
+            } else if (input.includes('feliz') || input.includes('alegre')) {
+                showSection('mensajes');
+                mostrarMensaje('feliz');
+                respuesta = "¡Qué bueno que estás feliz! Mira tu mensaje especial.";
+            } else if (input.includes('etapas') || input.includes('tiempo') || input.includes('meses')) {
+                showSection('etapas');
+                respuesta = "Buscando nuestro recorrido en el tiempo... Mostrando 'Etapas de la Vida del Amor'.";
+            } else if (input.includes('juego') || input.includes('jugar')) {
+                showSection('juego');
+                respuesta = "¡Hora de jugar! Atrapa los corazones.";
+            } else if (input.includes('actividades') || input.includes('hacer') || input.includes('planes')) {
+                showSection('actividades');
+                respuesta = "Mostrando nuestra lista de planes por cumplir.";
+            } else if (input.includes('jazmeidy') || input.includes('novia') || input.includes('amor')) {
+                showSection('inicio');
+                respuesta = "Jazmeidy es la autora de esta wiki y te ama con todo su corazón. Mostrando artículo principal.";
+            } else {
+                respuesta = `Resultados para "${input}": En toda nuestra historia, lo más importante es que te amo. Intenta buscar "etapas", "juego", o un estado de ánimo como "feliz" o "enojado".`;
+            }
+
+            showAlert(respuesta);
+            document.getElementById('searchInput').value = ''; // Limpiar buscador
+        }
+
+        // Custom Alert System
+        function showAlert(msg) {
+            document.getElementById('alertMessage').innerText = msg;
+            const alertContainer = document.getElementById('customAlert');
+            const alertBox = document.getElementById('alertBox');
+            
+            alertContainer.classList.remove('hidden');
+            // Pequeño delay para la animación de escala
+            setTimeout(() => {
+                alertBox.classList.remove('scale-95');
+                alertBox.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeAlert() {
+            const alertContainer = document.getElementById('customAlert');
+            const alertBox = document.getElementById('alertBox');
+            
+            alertBox.classList.remove('scale-100');
+            alertBox.classList.add('scale-95');
+            setTimeout(() => {
+                alertContainer.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- Lógica del Botiquín de Emociones ---
+        const mensajes = {
+            enojado: {
+                titulo: "Mi amor, respira...",
+                color: "border-black",
+                texto: `Miguel, sé que ahora mismo estás molesto y quizás no quieras hablar o las cosas se salieron de control. Está bien sentirse así, es válido. 
+
+Solo quiero que leas esto para recordarte que incluso cuando estamos enojados, te amo. Nuestro amor es mucho más grande que cualquier discusión tonta o cualquier problema. 
+
+Tómate tu tiempo, respira profundo. No somos tú contra mí, somos tú y yo contra el problema. Aquí estaré esperando, con los brazos abiertos y el corazón dispuesto a escucharte cuando te calmes. Eres el chico más bueno y no quiero verte mal. Te amo, perdóname si me equivoqué en algo.`
+            },
+            triste: {
+                titulo: "Aquí estoy para ti",
+                color: "border-wiki-blue",
+                texto: `Me duele el corazón saber que estás triste, mi niño bonito. Ojalá pudiera estar ahí ahora mismo para darte un abrazo tan fuerte que junte todos los pedacitos rotos.
+
+Recuerda lo fuerte y maravilloso que eres. Has superado días malos antes y superarás este también. Eres luz en mi vida y no me gusta verte apagado. Si necesitas hablar, llorar, o simplemente que me quede en silencio a tu lado por teléfono, dímelo. 
+
+Nunca estás solo, Miguel. Me tienes a mí, siempre. Todo va a estar bien, mi amor.`
+            },
+            feliz: {
+                titulo: "¡Me encanta verte así!",
+                color: "border-wiki-pink",
+                texto: `¡Qué alegría que estés feliz! Y lo que más me hace feliz a mí, es saber que sonríes. Tienes la sonrisa más preciosa del mundo, ¿lo sabías?
+
+Quiero verte brillar siempre así. Guardo este momento de felicidad en nuestra historia. Gracias por compartir tu alegría conmigo en estos 7 meses. Sigamos creando momentos que te hagan sentir así de pleno y contento. ¡Te amo muchísimo, mi chico bonito y feliz!`
+            },
+            estresado: {
+                titulo: "Pausa y confía en ti",
+                color: "border-wiki-purple",
+                texto: `Mi amor, sé que a veces la vida, las responsabilidades o las cosas del día a día pueden abrumarte. Sientes que cargas mucho peso.
+
+Haz una pausa. Cierra los ojos un segundo. Eres increíblemente capaz, inteligente y trabajador. Un paso a la vez, no tienes que resolver todo hoy mismo. Estoy muy orgullosa de la persona que eres y de cómo te esfuerzas. 
+
+Si necesitas distraerte, ve a jugar un rato en la sección de juegos o llámame y te cuento chistes malos. Te admiro y confío en ti. ¡Ánimo!`
+            }
+        };
+
+        function mostrarMensaje(emocion) {
+            const box = document.getElementById('mensajeBox');
+            const titulo = document.getElementById('mensajeTitulo');
+            const texto = document.getElementById('mensajeTexto');
+            const data = mensajes[emocion];
+
+            // Limpiar clases de color anteriores
+            box.className = `bg-white border-2 rounded-xl p-6 shadow-lg relative mt-6 transform transition-all duration-500 ease-in-out ${data.color}`;
+            
+            titulo.innerText = data.titulo;
+            texto.innerText = data.texto;
+            
+            box.classList.remove('hidden');
+            // Scroll suave hacia el mensaje
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function cerrarMensaje() {
+            document.getElementById('mensajeBox').classList.add('hidden');
+        }
+
+        // --- Lógica de Actividades (Checkboxes) ---
+        function toggleCheckbox(element) {
+            const iconContainer = element.querySelector('div');
+            if (iconContainer.classList.contains('text-transparent')) {
+                // Marcar
+                iconContainer.classList.remove('text-transparent');
+                iconContainer.classList.add('text-current', 'bg-opacity-20');
+                if(iconContainer.classList.contains('border-wiki-blue')) iconContainer.classList.add('bg-wiki-blue');
+                if(iconContainer.classList.contains('border-wiki-pink')) iconContainer.classList.add('bg-wiki-pink');
+                if(iconContainer.classList.contains('border-wiki-purple')) iconContainer.classList.add('bg-wiki-purple');
+                if(iconContainer.classList.contains('border-black')) iconContainer.classList.add('bg-black');
+                if(iconContainer.classList.contains('border-gray-400')) iconContainer.classList.add('bg-gray-400');
+                element.querySelector('span').classList.add('line-through', 'text-gray-400');
+            } else {
+                // Desmarcar
+                iconContainer.classList.add('text-transparent');
+                iconContainer.classList.remove('text-current', 'bg-wiki-blue', 'bg-wiki-pink', 'bg-wiki-purple', 'bg-black', 'bg-gray-400', 'bg-opacity-20');
+                element.querySelector('span').classList.remove('line-through', 'text-gray-400');
+            }
+        }
+
+        // --- Lógica del Minijuego (Atrapa Corazones) ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('gameOverlay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const msgDisplay = document.getElementById('gameMessage');
+
+        // Variables del juego
+        let score = 0;
+        let gameLoopId;
+        let gameOver = true;
+        let hearts = [];
+        
+        // Jugador (Canasta)
+        const player = {
+            width: 60,
+            height: 20,
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 30,
+            speed: 5,
+            dx: 0
+        };
+
+        // Controles teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Right') {
+                player.dx = player.speed;
+            } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
+                player.dx = -player.speed;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (
+                e.key === 'ArrowRight' || e.key === 'Right' ||
+                e.key === 'ArrowLeft' || e.key === 'Left'
+            ) {
+                player.dx = 0;
+            }
+        });
+
+        // Controles Táctiles (Touch)
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        const handleTouchStartLeft = (e) => { e.preventDefault(); player.dx = -player.speed; };
+        const handleTouchEndLeft = (e) => { e.preventDefault(); player.dx = 0; };
+        const handleTouchStartRight = (e) => { e.preventDefault(); player.dx = player.speed; };
+        const handleTouchEndRight = (e) => { e.preventDefault(); player.dx = 0; };
+
+        btnLeft.addEventListener('touchstart', handleTouchStartLeft, {passive: false});
+        btnLeft.addEventListener('touchend', handleTouchEndLeft, {passive: false});
+        btnLeft.addEventListener('mousedown', handleTouchStartLeft);
+        btnLeft.addEventListener('mouseup', handleTouchEndLeft);
+        btnLeft.addEventListener('mouseleave', handleTouchEndLeft);
+
+        btnRight.addEventListener('touchstart', handleTouchStartRight, {passive: false});
+        btnRight.addEventListener('touchend', handleTouchEndRight, {passive: false});
+        btnRight.addEventListener('mousedown', handleTouchStartRight);
+        btnRight.addEventListener('mouseup', handleTouchEndRight);
+        btnRight.addEventListener('mouseleave', handleTouchEndRight);
+
+
+        function createHeart() {
+            const size = Math.random() * 15 + 10;
+            const x = Math.random() * (canvas.width - size);
+            // Diferentes tipos de items (colores)
+            const typeProb = Math.random();
+            let color = '#ffafcc'; // rosa (normal)
+            let points = 1;
+            let speed = Math.random() * 2 + 1;
+
+            if (typeProb > 0.8) {
+                color = '#a2d2ff'; // azul (rápido, más puntos)
+                points = 3;
+                speed = Math.random() * 3 + 2.5;
+            } else if (typeProb < 0.1) {
+                color = '#2b2d42'; // negro (bomba, resta puntos)
+                points = -5;
+                speed = Math.random() * 2 + 2;
+            }
+
+            hearts.push({ x, y: -size, size, speed, color, points });
+        }
+
+        function drawPlayer() {
+            // Dibujar la base de la canasta (azul oscuro)
+            ctx.fillStyle = '#2b2d42';
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, 5);
+            ctx.fill();
+            
+            // Texto en la canasta
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Jazmeidy', player.x + player.width / 2, player.y + 14);
+        }
+
+        function drawHeartShape(ctx, x, y, size, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(size / 30, size / 30); // Escalar el SVG path
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            // Forma de corazón usando curvas de Bezier
+            ctx.moveTo(15, 10);
+            ctx.bezierCurveTo(15, 5, 10, 0, 5, 0);
+            ctx.bezierCurveTo(0, 0, 0, 8.5, 0, 8.5);
+            ctx.bezierCurveTo(0, 15, 10, 22, 15, 28);
+            ctx.bezierCurveTo(20, 22, 30, 15, 30, 8.5);
+            ctx.bezierCurveTo(30, 8.5, 30, 0, 25, 0);
+            ctx.bezierCurveTo(20, 0, 15, 5, 15, 10);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Mover jugador
+            player.x += player.dx;
+
+            // Colisiones paredes
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            drawPlayer();
+
+            // Probabilidad de crear nuevo corazón
+            if (Math.random() < 0.03) {
+                createHeart();
+            }
+
+            // Mover y dibujar corazones
+            for (let i = 0; i < hearts.length; i++) {
+                let h = hearts[i];
+                h.y += h.speed;
+
+                // Dibujar
+                if(h.points === -5) {
+                    // Si es bomba, dibujamos un círculo gris en lugar de corazón
+                    ctx.fillStyle = '#666';
+                    ctx.beginPath();
+                    ctx.arc(h.x + h.size/2, h.y + h.size/2, h.size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Agregar una 'X' roja
+                    ctx.fillStyle = 'red';
+                    ctx.font = `${h.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('X', h.x + h.size/2, h.y + h.size/1.2);
+                } else {
+                    drawHeartShape(ctx, h.x, h.y, h.size * 1.5, h.color); // Ajuste tamaño
+                }
+
+                // Colisión con el jugador
+                if (
+                    h.y + h.size > player.y &&
+                    h.y < player.y + player.height &&
+                    h.x + h.size > player.x &&
+                    h.x < player.x + player.width
+                ) {
+                    score += h.points;
+                    if(score < 0) score = 0; // No puntuación negativa
+                    scoreDisplay.innerText = score;
+                    hearts.splice(i, 1);
+                    i--;
+                    continue;
+                }
+
+                // Salida de pantalla
+                if (h.y > canvas.height) {
+                    hearts.splice(i, 1);
+                    i--;
+                }
+            }
+
+            // Condición de victoria simbólica (llegar a 100 de amor)
+            if(score >= 100) {
+                gameOver = true;
+                overlay.style.display = 'flex';
+                msgDisplay.innerHTML = "¡Llegaste a 100% de Amor!<br><span class='text-sm font-normal'>Ganaste, Miguel. Te amo mucho.</span>";
+                score = 0; // Reset para jugar de nuevo
+            } else {
+                gameLoopId = requestAnimationFrame(update);
+            }
+        }
+
+        function startGame() {
+            gameOver = false;
+            score = 0;
+            scoreDisplay.innerText = score;
+            hearts = [];
+            player.x = canvas.width / 2 - player.width / 2;
+            overlay.style.display = 'none';
+            update();
+        }
+
+        // Dibujar estado inicial del canvas
+        ctx.fillStyle = '#cdb4db';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawPlayer();
+
+        // Inicializar mostrando la sección de inicio
+        showSection('inicio');
+
+    </script>
+</body>
+</html>
